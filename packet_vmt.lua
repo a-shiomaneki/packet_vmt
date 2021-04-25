@@ -1,12 +1,11 @@
---[[
-    packet-vmt.lua
-    Routines for "Virtual Motion Tracker" packet dissection
+-- packet-vmt.lua
+-- A Wireshark Plugin for "Virtual Motion Tracker" packet dissection
 
-    Copyright (c) 2021 A.Shiomaneki <a.shiomaneki@gmail.com>
-    
-    This program is released under the MIT License.
-    http://opensource.org/licenses/mit-license.php
-]]
+-- Copyright (c) 2021, A.Shiomaneki <a.shiomaneki@gmail.com>
+
+-- This program is released under the MIT License.
+-- http://opensource.org/licenses/mit-license.php
+
 
 proto = Proto("vmt", "VirtualMotionTracker Protocol")
 
@@ -204,7 +203,7 @@ end
 
 proto:register_heuristic("udp", heuristic_checker)
 
--- Reference
+-- References
 -- VMT - Virtual Motion Tracker
 -- https://github.com/gpsnmeajp/VirtualMotionTracker
 -- Creating port-independent (heuristic) Wireshark dissectors in Lua
