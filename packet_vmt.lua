@@ -10,7 +10,7 @@
 proto = Proto("vmt", "VirtualMotionTracker Protocol")
 
 vmt_size_F = ProtoField.new("size", "vmt.vmt_size", ftypes.UINT32)
-vmt_address_F = ProtoField.new("path", "vmt.vmt_address", ftypes.STRING)
+vmt_path_F = ProtoField.new("path", "vmt.vmt_path", ftypes.STRING)
 vmt_format_F = ProtoField.new("format", "vmt.vmt_format", ftypes.STRING)
 vmt_index_F = ProtoField.new("index", "vmt.vmt_index", ftypes.INT32)
 vmt_enable_F = ProtoField.new("enable", "vmt.vmt_enable", ftypes.UINT32)
@@ -28,7 +28,7 @@ vmt_buttonindex_F = ProtoField.new("buttonindex", "vmt.vmt_buttonindex", ftypes.
 vmt_joystickindex_F = ProtoField.new("joystickindex", "vmt.vmt_joystickindex", ftypes.INT32)
 
 proto.fields = {
-    vmt_size_F, vmt_address_F, vmt_format_F,
+    vmt_size_F, vmt_path_F, vmt_format_F,
     vmt_index_F, vmt_enable_F, vmt_timeoffset_F,
     vmt_x_F, vmt_y_F, vmt_z_F,
     vmt_qx_F, vmt_qy_F, vmt_qz_F, vmt_qw_F,
@@ -114,7 +114,7 @@ function proto.dissector(buffer, pinfo, tree)
     -- local format = string.match(message, "([%w]+)", path:len() + 2)
     local format = buffer(path:len()+1):stringz()
 
-    subtree:add(vmt_address_F, path)
+    subtree:add(vmt_path_F, path)
     subtree:add(vmt_format_F, format)
     local cursor = path:len() + format:len() + 2
     local info = string.format("%s", path)
