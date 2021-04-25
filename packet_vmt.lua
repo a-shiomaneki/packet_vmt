@@ -1,8 +1,8 @@
 -- packet-vmt.lua
 -- A Wireshark Plugin for "Virtual Motion Tracker" packet dissection
-
+--
 -- Copyright (c) 2021, A.Shiomaneki <a.shiomaneki@gmail.com>
-
+--
 -- This program is released under the MIT License.
 -- http://opensource.org/licenses/mit-license.php
 
