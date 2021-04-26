@@ -117,7 +117,7 @@ function proto.dissector(buffer, pinfo, tree)
     subtree:add(vmt_path_F, path)
     subtree:add(vmt_format_F, format)
     local cursor = path:len() + format:len() + 2
-    local info = string.format("%s", path)
+    local info = string.format("%s ", path)
 
     local is_control_vmt = false
     for i, val in pairs{"/Room", "/Raw", "/Joint", "/Fllow", "/Joint", "/Fllow"} do
