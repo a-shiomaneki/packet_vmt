@@ -350,10 +350,3 @@ end
 
 proto:register_heuristic('udp', heuristic_checker)
 
--- References
--- VMT - Virtual Motion Tracker
--- https://github.com/gpsnmeajp/VirtualMotionTracker
--- Creating port-independent (heuristic) Wireshark dissectors in Lua
--- https://mika-s.github.io/wireshark/lua/dissector/2018/12/30/creating-port-independent-wireshark-dissectors-in-lua.html
--- packet-osc.c
--- https://gitlab.com/wireshark/wireshark/-/blob/master/epan/dissectors/packet-osc.c
