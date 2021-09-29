@@ -1,4 +1,4 @@
-# test_packet-vmt.lua
+# test_packet-vmt.py
 # Test message generator for 'Virtual Motion Tracker' packet dissection
 #
 # Copyright (c) 2021, A.Shiomaneki <a.shiomaneki@gmail.com>
