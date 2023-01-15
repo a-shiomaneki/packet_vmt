@@ -8,43 +8,100 @@
 
 import sys
 from abc import ABC, abstractmethod
+from enum import Enum, auto
+import numpy as np
+import quaternion
 from pythonosc import osc_message_builder
 from pythonosc import udp_client
 
+
+class PosTypes(Enum):
+    Room = auto()
+    Raw = auto()
+    Joint = auto()
+    Follow = auto()
+
+
+class AngleTypes(Enum):
+    Unity = auto()
+    UEuler = auto()
+    Driver = auto()
+
+
+class InputTypes(Enum):
+    Button = auto()
+    Trigger = auto()
+    Joystick = auto()
+
+
+class TouchClickTypes(Enum):
+    Touch = auto()
+    Click = auto()
+
+
 class Vmt(ABC):
     addressPrefix = "/VMT"
+
     @abstractmethod
     def getOscMessage(self):
         pass
 
-class TrackerControl(Vmt):
-    def getArgs(self):
-        return {
-            "index": 0,
-            "enable": 1,
-            "timeoffset": 0.0,
-            "x": 1.1,
-            "y": 1.2,
-            "z": 1.3,
-            "qx": 2.1,
-            "qy": 2.2,
-            "qz": 2.3,
-            "qw": 2.4,
-        }
 
-    def __init__(self, firstPath="", secondPath=""):
-        self.firstPath = firstPath
-        self.secondPath = secondPath
+class TrackerControl(Vmt):
+    _args = {
+        "index": 0,
+        "enable": 1,
+        "timeoffset": 0.0,
+        "x": 1.1,
+        "y": 1.2,
+        "z": 1.3,
+        "qx": 2.1,
+        "qy": 2.2,
+        "qz": 2.3,
+        "qw": 2.4,
+    }
+
+    def getArgs(self):
+        if self.angle is AngleTypes.UEuler:
+            quat = np.quaternion(
+                self._args["qx"],
+                self._args["qy"],
+                self._args["qz"],
+                self._args["qw"],
+            )
+            euler = quaternion.as_euler_angles(quat)
+            args = {
+                "index": self._args["index"],
+                "enable": self._args["enable"],
+                "timeoffset": self._args["timeoffset"],
+                "x": self._args["x"],
+                "y": self._args["y"],
+                "z": self._args["z"],
+                "rx": euler[0],
+                "ry": euler[1],
+                "rz": euler[2],
+            }
+            return args
+        else:
+            return self._args
+
+    pos: PosTypes
+    angle: AngleTypes
+
+    def __init__(self, pos: PosTypes, angle: AngleTypes):
+        self.pos = pos
+        self.angle = angle
 
     def getAddress(self):
-        return (self.addressPrefix +"/{0}/{1}").format(self.firstPath, self.secondPath)
+        return (self.addressPrefix + "/{0}/{1}").format(self.pos.name, self.angle.name)
 
     def getOscMessage(self):
         address = self.getAddress()
-        message = osc_message_builder.OscMessageBuilder(address = address)
+        message = osc_message_builder.OscMessageBuilder(address=address)
         for val in self.getArgs().values():
             message.add_arg(val)
         return message.build()
+
 
 class TrackerControlOnAnother(TrackerControl):
     def getArgs(self):
@@ -52,21 +109,32 @@ class TrackerControlOnAnother(TrackerControl):
         args["serial"] = "VMT_001"
         return args
 
+
 class InputOperation(Vmt):
-    def __init__(self, inputType):
-        self.address = self.addressPrefix + "/" + inputType
-    
+    input: InputTypes
+    touchClick: TouchClickTypes
+
+    def __init__(self, input: InputTypes, touchClick: TouchClickTypes = None):
+        self.input = input
+        self.touchClick = touchClick
+
     def getAddress(self):
-        return self.address
+        address = self.addressPrefix + "/" + self.input.name + \
+            "" if self.touchClick is None else "/" + self.touchClick.name
+        return address
 
     def getOscMessage(self):
         address = self.getAddress()
-        message = osc_message_builder.OscMessageBuilder(address = address)
+        message = osc_message_builder.OscMessageBuilder(address=address)
         for val in self.getArgs().values():
             message.add_arg(val)
         return message.build()
 
+
 class InputButton(InputOperation):
+    def __init__(self, touchClick: TouchClickTypes = None):
+        super().__init__(input=InputTypes.Button, touchClick=touchClick)
+
     def getArgs(self):
         args = {
             "index": 0,
@@ -77,7 +145,11 @@ class InputButton(InputOperation):
         assert type(args["value"]) == int
         return args
 
+
 class InputTrigger(InputOperation):
+    def __init__(self, touchClick: TouchClickTypes = None):
+        super().__init__(input=InputTypes.Trigger, touchClick=touchClick)
+
     def getArgs(self):
         args = {
             "index": 0,
@@ -88,7 +160,11 @@ class InputTrigger(InputOperation):
         assert type(args["value"]) == float
         return args
 
+
 class InputJoystick(InputOperation):
+    def __init__(self, touchClick: TouchClickTypes = None):
+        super().__init__(input=InputTypes.Joystick, touchClick=touchClick)
+
     def getArgs(self):
         args = {
             "index": 0,
@@ -101,34 +177,38 @@ class InputJoystick(InputOperation):
         assert type(args["y"]) == float
         return args
 
+
 class DriverControl(Vmt):
     def __init__(self, order):
         self.address = self.addressPrefix + "/" + order
-    
+
     def getAddress(self):
         return self.address
 
     def getOscMessage(self):
         address = self.getAddress()
-        message = osc_message_builder.OscMessageBuilder(address = address)
+        message = osc_message_builder.OscMessageBuilder(address=address)
         return message.build()
+
 
 class SetRoomMatrix(DriverControl):
     def getRoomMatrix(self):
-        json = {"RoomMatrix": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]}
+        json = {"RoomMatrix": [1.0, 0.0, 0.0, 0.0,
+                               0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0]}
         return json["RoomMatrix"]
 
     def getOscMessage(self):
         address = self.getAddress()
-        message = osc_message_builder.OscMessageBuilder(address = address)
+        message = osc_message_builder.OscMessageBuilder(address=address)
         for val in self.getRoomMatrix():
             message.add_arg(val)
         return message.build()
 
+
 class DriverResponse(Vmt):
     def __init__(self, responseType):
         self.address = self.addressPrefix + "/" + responseType
-    
+
     def getAddress(self):
         return self.address
 
@@ -138,28 +218,30 @@ class DriverResponse(Vmt):
 
     def getOscMessage(self):
         address = self.getAddress()
-        message = osc_message_builder.OscMessageBuilder(address = address)
+        message = osc_message_builder.OscMessageBuilder(address=address)
         for val in self.getArgs().values():
             message.add_arg(val)
         return message.build()
+
 
 class OutLog(DriverResponse):
     def getArgs(self):
         args = {
             # stat(int): 状態(0=info,1=warn,2=err)
-            "stat": 1, 
+            "stat": 1,
             # msg(string): メッセージ
-            "msg": "This is a test message.",   
+            "msg": "This is a test message.",
         }
         assert type(args["stat"]) == int
         assert type(args["msg"]) == str
         return args
 
+
 class OutAlive(DriverResponse):
     def getArgs(self):
         args = {
             # version(string): バージョン
-            "version": "VMT_005",                          
+            "version": "VMT_005",
             # installpath(string): ドライバのインストールパス
             "installpath": "C:\\Users\\test\\vmt_005\\vmt",
         }
@@ -167,12 +249,13 @@ class OutAlive(DriverResponse):
         assert type(args["installpath"]) == str
         return args
 
+
 class OutHaptic (DriverResponse):
     def getArgs(self):
         args = {
             "index": 0,
             # frequency(float): 周波数
-            "frequency": 440.0,                          
+            "frequency": 440.0,
             # amplitude(float): 振幅
             "amplitude": 0.8,
             # duration(float): 長さ
@@ -184,42 +267,52 @@ class OutHaptic (DriverResponse):
         assert type(args["duration"]) == float
         return args
 
+
 def getTrackerControlTestMessages():
     messages = []
-    firstPaths = ["Room", "Raw", "Joint", "Follow"]
-    secondPaths = ["Unity", "Driver"]
-    for f in firstPaths:
-        for s in secondPaths:
-            if f == "Joint" or f == "Follow":
+    for pos in PosTypes:
+        for angle in AngleTypes:
+            if pos is PosTypes.Joint or pos is PosTypes.Follow:
                 msg = TrackerControlOnAnother(
-                    firstPath=f, secondPath=s).getOscMessage()
+                    pos=pos, angle=angle).getOscMessage()
                 messages.append(msg)
             else:
-                msg = TrackerControl(firstPath=f, secondPath=s).getOscMessage()
+                msg = TrackerControl(pos=pos, angle=angle).getOscMessage()
                 messages.append(msg)
     return messages
 
+
 def getInputControlTestMessages():
     messages = []
-    objs = [InputButton("Input/Button"), InputTrigger("Input/Trigger"),
-            InputJoystick("Input/Joystick")]
+    objs = [InputButton(),
+            InputButton(touchClick=TouchClickTypes.Touch),
+            InputButton(touchClick=TouchClickTypes.Click),
+            InputTrigger(),
+            InputTrigger(touchClick=TouchClickTypes.Touch),
+            InputTrigger(touchClick=TouchClickTypes.Click),
+            InputJoystick(),
+            InputJoystick(touchClick=TouchClickTypes.Touch),
+            InputJoystick(touchClick=TouchClickTypes.Click),
+            ]
     message = [obj.getOscMessage() for obj in objs]
     return messages
+
 
 def getDriverControlTestMessages():
     messages = []
 
     orders = ["Reset", "LoadSetting"]
     for ord in orders:
-        msg = DriverControl(order = ord).getOscMessage()
+        msg = DriverControl(order=ord).getOscMessage()
         messages.append(msg)
 
     setRoomMatrixOrders = ["SetRoomMatrix", "SetRoomMatrix/Temporary"]
     for ord in setRoomMatrixOrders:
-        msg = SetRoomMatrix(order = ord).getOscMessage()
+        msg = SetRoomMatrix(order=ord).getOscMessage()
         messages.append(msg)
 
     return messages
+
 
 def getDriverResponseTestMessage():
     messages = []
@@ -227,11 +320,13 @@ def getDriverResponseTestMessage():
     messages = [obj.getOscMessage() for obj in objs]
     return messages
 
+
 def getTestMessagesToDriver():
     messages = getTrackerControlTestMessages()
-    messages += getInputControlTestMessages()   
+    messages += getInputControlTestMessages()
     messages += getDriverControlTestMessages()
     return messages
+
 
 def getTestMessagesFromDriver():
     messages = getDriverResponseTestMessage()
@@ -246,10 +341,12 @@ def main():
     toDriverUDPClient = udp_client.UDPClient(ipAddress, portToDriver)
     fromDriverUDPClient = udp_client.UDPClient(ipAddress, portFromDriver)
 
-    tasks = [(toDriverUDPClient, getTestMessagesToDriver()), (fromDriverUDPClient, getTestMessagesFromDriver())]
+    tasks = [(toDriverUDPClient, getTestMessagesToDriver()),
+             (fromDriverUDPClient, getTestMessagesFromDriver())]
     for udpClient, messages in tasks:
         for msg in messages:
             udpClient.send(msg)
+
 
 if __name__ == "__main__":
     main()
