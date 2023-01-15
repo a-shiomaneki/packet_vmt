@@ -28,6 +28,49 @@ class AngleTypes(Enum):
     Driver = auto()
 
 
+class BoneSetIndexes(Enum):
+    RootAndWrist = 0
+    Thumb = 1
+    Index = 2
+    Middle = 3
+    Ring = 4
+    Pinky = 5
+
+
+class BoneIndexes(Enum):
+    Root = 0
+    Wrist = 1
+    Thumb0_ThumbProximal = 2
+    Thumb1_ThumbIntermediate = 3
+    Thumb2_ThumbDistal = 4
+    Thumb3_ThumbEnd = 5
+    IndexFinger0_IndexProximal = 6
+    IndexFinger1_IndexIntermediate = 7
+    IndexFinger2_IndexDistal = 8
+    IndexFinger3_IndexDistal2 = 9
+    IndexFinger4_IndexEnd = 10
+    MiddleFinger0_MiddleProximal = 11
+    MiddleFinger1_MiddleIntermediate = 12
+    MiddleFinger2_MiddleDistal = 13
+    MiddleFinger3_MiddleDistal2 = 14
+    MiddleFinger4_MiddleEnd = 15
+    RingFinger0_RingProximal = 16
+    RingFinger1_RingIntermediate = 17
+    RingFinger2_RingDistal = 18
+    RingFinger3_RingDistal2 = 19
+    RingFinger4_RingEnd = 20
+    PinkyFinger0_LittleProximal = 21
+    PinkyFinger1_LittleIntermediate = 22
+    PinkyFinger2_LittleDistal = 23
+    PinkyFinger3_LittleDistal2 = 24
+    PinkyFinger4_LittleEnd = 25
+    Aux_Thumb_ThumbHelper = 26
+    Aux_IndexFinger_IndexHelper = 27
+    Aux_MiddleFinger_MiddleHelper = 28
+    Aux_RingFinger_RingHelper = 29
+    Aux_PinkyFinger_LittleHelper = 30
+
+
 class InputTypes(Enum):
     Button = auto()
     Trigger = auto()
@@ -37,6 +80,25 @@ class InputTypes(Enum):
 class TouchClickTypes(Enum):
     Touch = auto()
     Click = auto()
+
+
+class DriverControlTypes(Enum):
+    Reset = auto()
+    LoadSetting = auto()
+    SettRoomMatrix = auto()
+    Set = auto()
+    SetAutoPoseUpdate = auto()
+    Get = auto()
+    Subscribe = auto()
+    Unsubscribe = auto()
+    RequestResttart = auto()
+    SetDiagLog = auto()
+    Config = auto()
+    Debug = auto()
+
+
+class DriverResponnse(Enum):
+    Out = auto()
 
 
 class Vmt(ABC):
